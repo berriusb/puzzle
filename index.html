@@ -1,194 +1,696 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>사락 AI 독서 게임</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>사락 낱말퍼즐</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAF8F3;
+  --bg2: #F2EEE4;
+  --ink: #1E1A14;
+  --ink2: #5A5248;
+  --ink3: #9A9088;
+  --accent: #C8623A;
+  --accent2: #E8A882;
+  --gold: #C49A3C;
+  --cell: 36px;
+  --found1: #C8623A22;
+  --found2: #C49A3C22;
+  --found3: #4A8C6422;
+  --found4: #7B5EA722;
+  --found5: #C8623A22;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
 
-  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+/* header */
+.header {
+  width: 100%;
+  padding: 18px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.logo span { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.score-box {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Nanum Myeongjo', serif;
+}
+.timer {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--accent);
+  font-family: 'Nanum Myeongjo', serif;
+  min-width: 46px;
+  text-align: right;
+}
 
-  <style>
-    :root {
-      --bg: #FAF8F3;
-      --ink: #1E1A14;
-      --accent: #C8623A;
-      --sub: #6B645C;
-    }
+/* stage info */
+.stage-bar {
+  width: 100%;
+  padding: 0 20px 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.stage-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.stage-progress {
+  flex: 1;
+  height: 3px;
+  background: var(--bg2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.stage-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+/* hint strip */
+.hint-strip {
+  width: 100%;
+  padding: 0 20px 10px;
+  flex-shrink: 0;
+}
+.hint-text {
+  font-size: 12px;
+  color: var(--ink3);
+  text-align: center;
+  font-style: italic;
+}
 
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
+/* grid container */
+.grid-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  overflow: hidden;
+}
+.grid {
+  display: grid;
+  gap: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  position: relative;
+}
+.cell {
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #EDE8DF;
+  cursor: pointer;
+  transition: background .1s, transform .1s;
+  position: relative;
+  color: var(--ink);
+}
+.cell.selected {
+  background: #FFE8DC;
+  border-color: var(--accent);
+  transform: scale(1.06);
+  z-index: 2;
+}
+.cell.found-0 { background: #FFE8DC; border-color: #C8623A; color: #7A3010; }
+.cell.found-1 { background: #FFF3DC; border-color: #C49A3C; color: #7A5A10; }
+.cell.found-2 { background: #DCF0E4; border-color: #4A8C64; color: #1A5035; }
+.cell.found-3 { background: #EAE0F5; border-color: #7B5EA7; color: #3A1A70; }
+.cell.found-4 { background: #DCEEF8; border-color: #4A7CA8; color: #1A3A60; }
+.cell.found-5 { background: #F5E0E8; border-color: #A84A6A; color: #6A1A30; }
+.cell.pop {
+  animation: cellPop .3s ease;
+}
+@keyframes cellPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 
-    .container {
-      max-width: 720px;
-      width: 100%;
-    }
+/* word list */
+.word-list-wrap {
+  width: 100%;
+  padding: 10px 20px 10px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-top: 1px solid #E8E2D5;
+}
+.word-list-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: .06em;
+  margin-bottom: 8px;
+}
+.word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.word-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: 'Nanum Myeongjo', serif;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #D8D2C5;
+  color: var(--ink2);
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+}
+.word-chip.found-chip-0 { background: #FFE8DC; border-color: #C8623A; color: #7A3010; text-decoration: line-through; }
+.word-chip.found-chip-1 { background: #FFF3DC; border-color: #C49A3C; color: #7A5A10; text-decoration: line-through; }
+.word-chip.found-chip-2 { background: #DCF0E4; border-color: #4A8C64; color: #1A5035; text-decoration: line-through; }
+.word-chip.found-chip-3 { background: #EAE0F5; border-color: #7B5EA7; color: #3A1A70; text-decoration: line-through; }
+.word-chip.found-chip-4 { background: #DCEEF8; border-color: #4A7CA8; color: #1A3A60; text-decoration: line-through; }
+.word-chip.found-chip-5 { background: #F5E0E8; border-color: #A84A6A; color: #6A1A30; text-decoration: line-through; }
 
-    .logo {
-      font-family: 'Nanum Myeongjo', serif;
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 20px;
-    }
+/* toast */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 14px 28px;
+  border-radius: 16px;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: all .2s;
+  z-index: 100;
+  white-space: nowrap;
+  text-align: center;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.toast .sub { font-size: 12px; font-weight: 400; font-family: 'Noto Sans KR', sans-serif; margin-top: 4px; color: var(--accent2); }
 
-    .logo span {
-      color: var(--accent);
-    }
-
-    .hero {
-      margin-bottom: 40px;
-    }
-
-    .hero h1 {
-      font-size: 26px;
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
-
-    .hero p {
-      color: var(--sub);
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    .section {
-      margin-bottom: 40px;
-    }
-
-    .section h2 {
-      font-size: 18px;
-      margin-bottom: 12px;
-    }
-
-    .feature {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #eee;
-    }
-
-    .feature-title {
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .cta {
-      margin-top: 40px;
-      text-align: center;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 14px 24px;
-      background: var(--accent);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 10px;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-
-    .btn:hover {
-      opacity: 0.9;
-    }
-
-    .sub-btn {
-      display: block;
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--sub);
-      text-decoration: none;
-    }
-
-    footer {
-      margin-top: 60px;
-      font-size: 12px;
-      color: #aaa;
-    }
-  </style>
-
+/* complete overlay */
+.complete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30,26,20,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s;
+}
+.complete-overlay.show { opacity: 1; pointer-events: all; }
+.complete-card {
+  background: var(--bg);
+  border-radius: 24px;
+  padding: 36px 32px;
+  width: 88%;
+  max-width: 340px;
+  text-align: center;
+}
+.complete-icon { font-size: 48px; margin-bottom: 12px; }
+.complete-title {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+.complete-sub { font-size: 14px; color: var(--ink2); margin-bottom: 6px; }
+.complete-score {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent);
+  margin: 16px 0;
+}
+.complete-score span { font-size: 14px; color: var(--ink3); }
+.complete-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.c-stat { text-align: center; }
+.c-stat-num { font-size: 18px; font-weight: 700; color: var(--ink); font-family: 'Nanum Myeongjo', serif; }
+.c-stat-lbl { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.btn-next {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-next:hover { background: #A84F2A; }
+.btn-retry {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--ink2);
+  border: 1px solid var(--bg2);
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+</style>
 </head>
-
 <body>
-  <div class="container">
 
-```
-<div class="logo">사락<span> AI</span></div>
-
-<div class="hero">
-  <h1>읽기를 게임처럼,<br>생각을 성장처럼</h1>
-  <p>
-    사락은 독서를 단순 기록이 아닌<br>
-    AI와 함께하는 사고의 경험으로 확장합니다.
-  </p>
-</div>
-
-<div class="section">
-  <h2>🧠 AI 기능</h2>
-
-  <div class="feature">
-    <div class="feature-title">AI 독서 노트 생성</div>
-    <div>하이라이트를 자동으로 요약하고 핵심 인사이트를 생성합니다.</div>
-  </div>
-
-  <div class="feature">
-    <div class="feature-title">AI 독서 코치</div>
-    <div>읽기 패턴을 분석해 개인화된 독서 습관을 제안합니다.</div>
-  </div>
-
-  <div class="feature">
-    <div class="feature-title">AI 리뷰 보조</div>
-    <div>짧은 감상을 구조화된 리뷰로 확장합니다.</div>
+<div class="header">
+  <div class="logo">사락<span>·</span>퍼즐</div>
+  <div class="header-right">
+    <div class="timer" id="timer">02:00</div>
+    <div class="score-box" id="score">0점</div>
   </div>
 </div>
 
-<div class="section">
-  <h2>🎮 게임 요소</h2>
+<div class="stage-bar">
+  <div class="stage-label" id="stage-label">STAGE 1 / 3</div>
+  <div class="stage-progress"><div class="stage-fill" id="stage-fill" style="width:0%"></div></div>
+  <div class="stage-label" id="found-count">0 / 6</div>
+</div>
 
-  <div class="feature">
-    <div class="feature-title">독서 퀘스트</div>
-    <div>AI가 생성하는 개인화 미션을 수행하며 성장합니다.</div>
-  </div>
+<div class="hint-strip">
+  <div class="hint-text" id="hint-text">책 제목과 작가 이름을 찾아보세요 — 가로·세로·대각선 방향</div>
+</div>
 
-  <div class="feature">
-    <div class="feature-title">레벨 & 경험치</div>
-    <div>읽기와 사고를 통해 레벨업합니다.</div>
-  </div>
+<div class="grid-wrap">
+  <div class="grid" id="grid"></div>
+</div>
 
-  <div class="feature">
-    <div class="feature-title">낱말 퍼즐</div>
-    <div>책과 작가를 찾으며 재미있게 독서를 확장합니다.</div>
+<div class="word-list-wrap">
+  <div class="word-list-title">찾을 단어</div>
+  <div class="word-list" id="word-list"></div>
+</div>
+
+<div class="toast" id="toast">
+  <div id="toast-word"></div>
+  <div class="sub" id="toast-sub"></div>
+</div>
+
+<div class="complete-overlay" id="complete">
+  <div class="complete-card">
+    <div class="complete-icon">📚</div>
+    <div class="complete-title" id="c-title">스테이지 클리어!</div>
+    <div class="complete-sub" id="c-sub">모든 단어를 찾았어요</div>
+    <div class="complete-score" id="c-score">1,200<span>점</span></div>
+    <div class="complete-stats">
+      <div class="c-stat"><div class="c-stat-num" id="c-time">01:23</div><div class="c-stat-lbl">남은 시간</div></div>
+      <div class="c-stat"><div class="c-stat-num" id="c-bonus">+300</div><div class="c-stat-lbl">시간 보너스</div></div>
+      <div class="c-stat"><div class="c-stat-num" id="c-stage">1</div><div class="c-stat-lbl">스테이지</div></div>
+    </div>
+    <button class="btn-next" id="btn-next" onclick="nextStage()">다음 스테이지 →</button>
+    <button class="btn-retry" onclick="retryStage()">다시 도전</button>
   </div>
 </div>
 
-<div class="cta">
-  <a href="./sarak-puzzle.html" class="btn">
-    🎮 퍼즐 플레이하기
-  </a>
-  <a href="https://sarak.yes24.com/" class="sub-btn">
-    사락 서비스 바로가기 →
-  </a>
-</div>
+<script>
+const STAGES = [
+  {
+    label: "STAGE 1 · 한국 현대문학",
+    hint: "한국 현대소설 작가와 작품들",
+    words: [
+      { word: "김애란", type: "작가", info: "『비행운』" },
+      { word: "한강", type: "작가", info: "『채식주의자』" },
+      { word: "비행운", type: "작품", info: "김애란" },
+      { word: "채식", type: "작품", info: "한강 『채식주의자』" },
+      { word: "이상", type: "작가", info: "『날개』" },
+      { word: "윤동주", type: "작가", info: "『하늘과 바람과 별과 시』" },
+    ],
+    size: 9
+  },
+  {
+    label: "STAGE 2 · 세계 명작",
+    hint: "세계 문학의 작가와 작품들",
+    words: [
+      { word: "카프카", type: "작가", info: "『변신』" },
+      { word: "변신", type: "작품", info: "프란츠 카프카" },
+      { word: "톨스토이", type: "작가", info: "『전쟁과 평화』" },
+      { word: "햄릿", type: "작품", info: "셰익스피어" },
+      { word: "괴테", type: "작가", info: "『파우스트』" },
+      { word: "보봐리", type: "작품", info: "플로베르 『보봐리 부인』" },
+    ],
+    size: 9
+  },
+  {
+    label: "STAGE 3 · 베스트셀러",
+    hint: "최근 인기 작가와 베스트셀러",
+    words: [
+      { word: "장강명", type: "작가", info: "『표백』" },
+      { word: "표백", type: "작품", info: "장강명" },
+      { word: "구병모", type: "작가", info: "『위저드 베이커리』" },
+      { word: "황정은", type: "작가", info: "『백의 그림자』" },
+      { word: "편혜영", type: "작가", info: "『아오이가든』" },
+      { word: "은희경", type: "작가", info: "『새의 선물』" },
+    ],
+    size: 10
+  }
+];
 
-<footer>
-  © Sarak AI Gamification Concept Demo
-</footer>
-```
+const COLORS = ['found-0','found-1','found-2','found-3','found-4','found-5'];
+const CHIP_COLORS = ['found-chip-0','found-chip-1','found-chip-2','found-chip-3','found-chip-4','found-chip-5'];
+const FOUND_MESSAGES = ['발견!','찾았다!','정확해요!','훌륭해요!','멋져요!'];
 
-  </div>
+let stageIdx = 0;
+let grid = [], gridEl, words = [], foundWords = [];
+let selecting = false, startCell = null, currentCells = [];
+let score = 0, timeLeft = 120, timerInterval;
+let gridSize = 9;
+let totalScore = 0;
+
+function buildGame(idx) {
+  clearInterval(timerInterval);
+  const stage = STAGES[idx];
+  gridSize = stage.size;
+  words = stage.words.map(w => ({...w}));
+  foundWords = [];
+
+  document.getElementById('stage-label').textContent = stage.label;
+  document.getElementById('hint-text').textContent = stage.hint;
+  document.getElementById('found-count').textContent = '0 / ' + words.length;
+  document.getElementById('stage-fill').style.width = '0%';
+
+  document.getElementById('complete').classList.remove('show');
+
+  grid = buildGrid(gridSize, words);
+  renderGrid(grid, gridSize);
+  renderWordList(words);
+
+  timeLeft = 120;
+  updateTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      showTimeout();
+    }
+  }, 1000);
+}
+
+function buildGrid(size, wordObjs) {
+  const g = Array.from({length: size}, () => Array(size).fill(null));
+  const DIRS = [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
+
+  for (const wo of wordObjs) {
+    const w = wo.word;
+    let placed = false, tries = 0;
+    while (!placed && tries < 300) {
+      tries++;
+      const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
+      const sr = Math.floor(Math.random() * size);
+      const sc = Math.floor(Math.random() * size);
+      let ok = true, cells = [];
+      for (let i = 0; i < w.length; i++) {
+        const r = sr + dir[0]*i, c = sc + dir[1]*i;
+        if (r < 0 || r >= size || c < 0 || c >= size) { ok = false; break; }
+        if (g[r][c] !== null && g[r][c] !== w[i]) { ok = false; break; }
+        cells.push([r,c]);
+      }
+      if (ok) {
+        cells.forEach(([r,c],i) => g[r][c] = w[i]);
+        wo.cells = cells;
+        placed = true;
+      }
+    }
+  }
+  const CHARS = '가나다라마바사아자차카타파하갈날달랄말발살알잘찰칼탈팔할감남담람맘밤삼암잠참캄탐팜함강낭당랑망방상앙장창캉탕팡항개내대래매배새애재채캐태패해';
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size; c++)
+      if (!g[r][c]) g[r][c] = CHARS[Math.floor(Math.random() * CHARS.length)];
+  return g;
+}
+
+function renderGrid(g, size) {
+  const el = document.getElementById('grid');
+  el.innerHTML = '';
+  el.style.gridTemplateColumns = `repeat(${size}, var(--cell))`;
+
+  const wrap = document.querySelector('.grid-wrap');
+  const available = Math.min(wrap.clientWidth - 20, wrap.clientHeight - 20);
+  const cellSize = Math.floor(Math.min(available / size, 40));
+  document.documentElement.style.setProperty('--cell', cellSize + 'px');
+  el.style.gap = cellSize > 34 ? '2px' : '1px';
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = g[r][c];
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.addEventListener('pointerdown', onPointerDown);
+      cell.addEventListener('pointerenter', onPointerEnter);
+      cell.addEventListener('pointerup', onPointerUp);
+      el.appendChild(cell);
+    }
+  }
+  gridEl = el;
+}
+
+function getCell(r, c) {
+  return gridEl.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  selecting = true;
+  startCell = e.currentTarget;
+  currentCells = [startCell];
+  startCell.classList.add('selected');
+  startCell.setPointerCapture(e.pointerId);
+}
+
+function onPointerEnter(e) {
+  if (!selecting || !startCell) return;
+  const sr = +startCell.dataset.r, sc = +startCell.dataset.c;
+  const er = +e.currentTarget.dataset.r, ec = +e.currentTarget.dataset.c;
+  const dr = er - sr, dc = ec - sc;
+  const len = Math.max(Math.abs(dr), Math.abs(dc));
+  if (len === 0) return;
+  const stepR = dr === 0 ? 0 : dr / Math.abs(dr);
+  const stepC = dc === 0 ? 0 : dc / Math.abs(dc);
+  if (Math.abs(dr) !== 0 && Math.abs(dc) !== 0 && Math.abs(dr) !== Math.abs(dc)) return;
+
+  currentCells.forEach(c => { if (!isFoundCell(c)) c.classList.remove('selected'); });
+  currentCells = [];
+  for (let i = 0; i <= len; i++) {
+    const cell = getCell(sr + stepR*i, sc + stepC*i);
+    if (cell) {
+      if (!isFoundCell(cell)) cell.classList.add('selected');
+      currentCells.push(cell);
+    }
+  }
+}
+
+function isFoundCell(cell) {
+  return COLORS.some(c => cell.classList.contains(c));
+}
+
+function onPointerUp(e) {
+  if (!selecting) return;
+  selecting = false;
+  checkWord();
+  currentCells.forEach(c => { if (!isFoundCell(c)) c.classList.remove('selected'); });
+  currentCells = [];
+  startCell = null;
+}
+
+function checkWord() {
+  const text = currentCells.map(c => c.textContent).join('');
+  const revText = [...text].reverse().join('');
+  let matched = null, matchedWord = null;
+
+  for (const wo of words) {
+    if (foundWords.includes(wo.word)) continue;
+    if (wo.word === text || wo.word === revText) {
+      matched = wo;
+      matchedWord = wo.word === text ? text : revText;
+      break;
+    }
+  }
+
+  if (matched) {
+    const colorIdx = foundWords.length;
+    const colorClass = COLORS[colorIdx % COLORS.length];
+    foundWords.push(matched.word);
+
+    currentCells.forEach(cell => {
+      cell.classList.remove('selected');
+      cell.classList.add(colorClass, 'pop');
+    });
+
+    const chip = document.getElementById('chip-' + matched.word);
+    if (chip) chip.className = 'word-chip ' + CHIP_COLORS[colorIdx % CHIP_COLORS.length];
+
+    const pts = matched.word.length * 100 + (timeLeft > 60 ? 200 : timeLeft > 30 ? 100 : 50);
+    score += pts;
+    updateScore();
+
+    const msg = FOUND_MESSAGES[Math.floor(Math.random() * FOUND_MESSAGES.length)];
+    showToast(`${matched.word} ${msg}`, `+${pts}점 · ${matched.type}: ${matched.info}`);
+
+    const prog = foundWords.length / words.length;
+    document.getElementById('stage-fill').style.width = (prog * 100) + '%';
+    document.getElementById('found-count').textContent = foundWords.length + ' / ' + words.length;
+
+    if (foundWords.length === words.length) {
+      setTimeout(() => showComplete(), 700);
+    }
+  }
+}
+
+function renderWordList(wordObjs) {
+  const el = document.getElementById('word-list');
+  el.innerHTML = '';
+  wordObjs.forEach(wo => {
+    const chip = document.createElement('div');
+    chip.className = 'word-chip';
+    chip.id = 'chip-' + wo.word;
+    chip.innerHTML = `<span>${wo.word}</span> <span style="font-size:10px;opacity:.6;font-family:'Noto Sans KR'">${wo.type}</span>`;
+    el.appendChild(chip);
+  });
+}
+
+function updateTimer() {
+  const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const s = (timeLeft % 60).toString().padStart(2, '0');
+  const el = document.getElementById('timer');
+  el.textContent = m + ':' + s;
+  el.style.color = timeLeft <= 30 ? '#E24B4A' : 'var(--accent)';
+}
+
+function updateScore() {
+  document.getElementById('score').textContent = score.toLocaleString() + '점';
+}
+
+function showToast(word, sub) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-word').textContent = word;
+  document.getElementById('toast-sub').textContent = sub;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function showComplete() {
+  clearInterval(timerInterval);
+  const bonus = Math.floor(timeLeft * 5);
+  totalScore = score + bonus;
+  const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+  const s = (timeLeft % 60).toString().padStart(2,'0');
+
+  document.getElementById('c-title').textContent = stageIdx < STAGES.length - 1 ? '스테이지 클리어! 🎉' : '전 스테이지 완료! 🏆';
+  document.getElementById('c-sub').textContent = `모든 ${words.length}개 단어를 찾았어요`;
+  document.getElementById('c-score').innerHTML = totalScore.toLocaleString() + '<span>점</span>';
+  document.getElementById('c-time').textContent = m + ':' + s;
+  document.getElementById('c-bonus').textContent = '+' + bonus;
+  document.getElementById('c-stage').textContent = stageIdx + 1;
+
+  const btn = document.getElementById('btn-next');
+  if (stageIdx >= STAGES.length - 1) {
+    btn.textContent = '처음부터 다시 →';
+  } else {
+    btn.textContent = '다음 스테이지 →';
+  }
+  document.getElementById('complete').classList.add('show');
+}
+
+function showTimeout() {
+  document.getElementById('c-title').textContent = '시간 초과!';
+  document.getElementById('c-sub').textContent = `${foundWords.length}개 / ${words.length}개 발견`;
+  document.getElementById('c-score').innerHTML = score.toLocaleString() + '<span>점</span>';
+  document.getElementById('c-time').textContent = '00:00';
+  document.getElementById('c-bonus').textContent = '+0';
+  document.getElementById('c-stage').textContent = stageIdx + 1;
+  document.getElementById('btn-next').textContent = '다시 도전 →';
+  document.getElementById('complete').classList.add('show');
+}
+
+function nextStage() {
+  if (stageIdx >= STAGES.length - 1) {
+    stageIdx = 0;
+    score = 0;
+    totalScore = 0;
+    updateScore();
+  } else {
+    stageIdx++;
+  }
+  buildGame(stageIdx);
+}
+
+function retryStage() {
+  score = Math.max(0, score - 200);
+  updateScore();
+  buildGame(stageIdx);
+}
+
+window.addEventListener('resize', () => {
+  const stage = STAGES[stageIdx];
+  const wrap = document.querySelector('.grid-wrap');
+  const available = Math.min(wrap.clientWidth - 20, wrap.clientHeight - 20);
+  const cellSize = Math.floor(Math.min(available / gridSize, 40));
+  document.documentElement.style.setProperty('--cell', cellSize + 'px');
+});
+
+buildGame(0);
+</script>
 </body>
 </html>
