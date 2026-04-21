@@ -1,659 +1,265 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>사락 낱말퍼즐</title>
-<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #FAF8F3;
-  --bg2: #F2EEE4;
-  --ink: #1E1A14;
-  --ink2: #5A5248;
-  --ink3: #9A9088;
-  --accent: #C8623A;
-  --accent2: #E8A882;
-  --cell: 36px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; }
-body {
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 430px;
-  margin: 0 auto;
-  overflow: hidden;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사락 문학 십자말풀이 (중복 제거)</title>
+    
+    <style>
+        /* --- 색상 변수 정의 (메인 컬러 반영) --- */
+        :root {
+            --main-color: #0080FF; /* 요청하신 메인 파란색 */
+            --main-color-hover: #3399FF; /* 호버 시 약간 밝게 */
+            --main-color-active: #0066CC; /* 클릭 시 약간 어둡게 */
+            --main-color-light: #E6F2FF; /* 선택된 카드 배경용 아주 연한 파랑 */
+            
+            --bg-color: #f0f2f5;
+            --text-color-primary: #333;
+            --text-color-secondary: #666;
+            --card-bg: white;
+            --card-border: #ddd;
+            --incorrect-color: #ea2b2b; /* 틀렸을 때 빨간색 (유지) */
+            --incorrect-bg: #ffefef;
+        }
 
-/* ── header ─────────────────────────────── */
-.header {
-  width: 100%; padding: 16px 20px 8px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.logo { font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 22px; letter-spacing: -.5px; }
-.logo span { color: var(--accent); }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.score-box {
-  background: var(--ink); color: var(--bg);
-  padding: 5px 14px; border-radius: 20px;
-  font-size: 13px; font-weight: 500; font-family: 'Nanum Myeongjo', serif;
-}
-.timer {
-  font-size: 15px; font-weight: 500; color: var(--accent);
-  font-family: 'Nanum Myeongjo', serif; min-width: 46px; text-align: right;
-}
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-color-primary);
+        }
 
-/* ── stage bar ───────────────────────────── */
-.stage-bar {
-  width: 100%; padding: 0 20px 8px;
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-}
-.stage-label { font-size: 11px; font-weight: 500; color: var(--ink3); letter-spacing: .05em; white-space: nowrap; }
-.stage-progress { flex: 1; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
-.stage-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
+        h1 {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2.5em; /* 타이틀 크기 키움 */
+        }
 
-/* ── hint ────────────────────────────────── */
-.hint-strip { width: 100%; padding: 0 20px 6px; flex-shrink: 0; }
-.hint-text { font-size: 12px; color: var(--ink3); text-align: center; font-style: italic; }
+        .description {
+            color: var(--text-color-secondary);
+            margin-bottom: 40px; /* 여백 늘림 */
+            text-align: center;
+            max-width: 500px; /* 너비 늘림 */
+            font-size: 1.1em; /* 폰트 크기 키움 */
+            line-height: 1.6; /* 줄 간격 조절 */
+        }
 
-/* ── selected word preview ───────────────── */
-.sel-preview {
-  width: 100%; padding: 0 20px 6px;
-  flex-shrink: 0; text-align: center; min-height: 28px;
-}
-.sel-chars {
-  display: inline-flex; gap: 4px; align-items: center;
-  background: #fff; border: 1px solid var(--accent);
-  border-radius: 20px; padding: 3px 14px;
-  font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 700;
-  color: var(--accent); min-width: 40px; justify-content: center;
-  transition: all .15s;
-}
-.sel-chars.empty { border-color: #E8E2D5; color: var(--ink3); background: transparent; font-size: 12px; font-family: 'Noto Sans KR'; font-weight: 400; }
+        /* 공통 버튼 스타일 (메인 컬러 반영 및 3D 효과) */
+        .btn-primary {
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            border-bottom: 5px solid var(--main-color-active); /* 3D 효과 피벗 */
+            border-radius: 14px; /* 테두리 둥글게 */
+            padding: 16px 32px; /* 패딩 늘림 */
+            font-size: 1.2em; /* 폰트 크기 키움 */
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-/* ── grid ────────────────────────────────── */
-.grid-wrap {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 0 8px; overflow: hidden; width: 100%;
-}
-.grid {
-  display: grid; gap: 3px;
-  user-select: none; -webkit-user-select: none;
-}
-.cell {
-  width: var(--cell); height: var(--cell);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Nanum Myeongjo', serif; font-size: 15px; font-weight: 700;
-  border-radius: 7px; background: #fff; border: 1.5px solid #EDE8DF;
-  color: var(--ink); cursor: pointer;
-  transition: background .1s, transform .1s, border-color .1s;
-  /* ensure each cell is tappable */
-  -webkit-tap-highlight-color: transparent;
-}
-.cell:active { transform: scale(.92); }
+        .btn-primary:hover {
+            background-color: var(--main-color-hover);
+        }
 
-/* selected (in progress) */
-.cell.sel {
-  background: #FFE8DC;
-  border-color: var(--accent);
-  transform: scale(1.08);
-  z-index: 2;
-  position: relative;
-}
+        .btn-primary:active {
+            border-bottom-width: 0;
+            transform: translateY(5px); /* 클릭 시 들어가는 효과 피벗 */
+        }
 
-/* found colors */
-.cell.f0 { background: #FFE8DC; border-color: #C8623A; color: #7A3010; cursor: default; }
-.cell.f1 { background: #FFF3DC; border-color: #C49A3C; color: #7A5A10; cursor: default; }
-.cell.f2 { background: #DCF0E4; border-color: #4A8C64; color: #1A5035; cursor: default; }
-.cell.f3 { background: #EAE0F5; border-color: #7B5EA7; color: #3A1A70; cursor: default; }
-.cell.f4 { background: #DCEEF8; border-color: #4A7CA8; color: #1A3A60; cursor: default; }
-.cell.f5 { background: #F5E0E8; border-color: #A84A6A; color: #6A1A30; cursor: default; }
+        /* --- 화면 섹션 스타일 --- */
+        .screen {
+            display: none; /* 기본적으로 숨김 */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px; /* 최대 너비 늘림 */
+        }
 
-/* wrong shake */
-@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
-.cell.wrong { animation: shake .3s ease; background: #FDEAEA; border-color: #E24B4A; }
+        /* 시작 화면 */
+        #start-screen {
+            display: flex; /* 처음에만 보이도록 설정 */
+        }
 
-/* found pop */
-@keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
-.cell.pop { animation: pop .3s ease; }
+        /* 게임 화면 (게임 보드) */
+        #game-screen {
+            /* display: flex; (JS에서 제어) */
+        }
 
-/* ── word list ───────────────────────────── */
-.word-list-wrap {
-  width: 100%; padding: 10px 20px 12px; flex-shrink: 0;
-  background: var(--bg2); border-top: 1px solid #E8E2D5;
-}
-.word-list-title { font-size: 11px; font-weight: 500; color: var(--ink3); letter-spacing: .05em; margin-bottom: 8px; }
-.word-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  padding: 4px 12px; border-radius: 20px;
-  font-size: 13px; font-family: 'Nanum Myeongjo', serif; font-weight: 700;
-  background: #fff; border: 1px solid #D8D2C5; color: var(--ink2); transition: all .3s;
-}
-.chip.c0 { background:#FFE8DC; border-color:#C8623A; color:#7A3010; text-decoration:line-through; }
-.chip.c1 { background:#FFF3DC; border-color:#C49A3C; color:#7A5A10; text-decoration:line-through; }
-.chip.c2 { background:#DCF0E4; border-color:#4A8C64; color:#1A5035; text-decoration:line-through; }
-.chip.c3 { background:#EAE0F5; border-color:#7B5EA7; color:#3A1A70; text-decoration:line-through; }
-.chip.c4 { background:#DCEEF8; border-color:#4A7CA8; color:#1A3A60; text-decoration:line-through; }
-.chip.c5 { background:#F5E0E8; border-color:#A84A6A; color:#6A1A30; text-decoration:line-through; }
+        /* 결과 화면 */
+        #result-screen {
+            /* display: flex; (JS에서 제어) */
+            text-align: center;
+        }
 
-/* ── toast ───────────────────────────────── */
-.toast {
-  position: fixed; top: 44%; left: 50%;
-  transform: translate(-50%,-50%) scale(.8);
-  background: var(--ink); color: var(--bg);
-  padding: 13px 26px; border-radius: 16px;
-  font-family: 'Nanum Myeongjo', serif; font-size: 18px; font-weight: 700;
-  opacity: 0; pointer-events: none; transition: all .2s; z-index: 100;
-  text-align: center; white-space: nowrap;
-}
-.toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-.toast .sub { font-size: 12px; font-weight: 400; font-family: 'Noto Sans KR'; margin-top: 4px; color: var(--accent2); }
+        /* --- 게임 보드 및 카드 스타일 (메인 컬러 반영 및 모바일 우선 배치) --- */
+        #game-board {
+            display: grid;
+            /* 모바일 환경에서는 2열 배치를 기본으로 설정하여 카드가 너무 작아지지 않도록 함 */
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; /* 간격 넓힘 */
+            width: 100%; /* 너비 꽉 차게 */
+            margin-top: 30px; /* 여백 늘림 */
+            padding: 0 10px; /* 측면 패딩 추가 */
+            box-sizing: border-box;
+        }
 
-/* ── complete overlay ───────────────────── */
-.overlay {
-  position: fixed; inset: 0; background: rgba(30,26,20,.85);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 200; opacity: 0; pointer-events: none; transition: opacity .4s;
-}
-.overlay.show { opacity: 1; pointer-events: all; }
-.card {
-  background: var(--bg); border-radius: 24px; padding: 32px 28px;
-  width: 88%; max-width: 340px; text-align: center;
-}
-.c-icon { font-size: 44px; margin-bottom: 10px; }
-.c-title { font-family:'Nanum Myeongjo',serif; font-size:22px; font-weight:800; margin-bottom:4px; }
-.c-sub { font-size:13px; color:var(--ink2); margin-bottom:4px; }
-.c-score { font-family:'Nanum Myeongjo',serif; font-size:34px; font-weight:800; color:var(--accent); margin:14px 0; }
-.c-score span { font-size:14px; color:var(--ink3); }
-.c-stats { display:flex; justify-content:center; gap:24px; margin-bottom:20px; }
-.c-stat { text-align:center; }
-.c-stat-n { font-size:18px; font-weight:700; font-family:'Nanum Myeongjo',serif; }
-.c-stat-l { font-size:11px; color:var(--ink3); margin-top:2px; }
-.btn-main {
-  width:100%; padding:13px; background:var(--accent); color:#fff;
-  border:none; border-radius:12px;
-  font-family:'Nanum Myeongjo',serif; font-size:16px; font-weight:700; cursor:pointer;
-}
-.btn-sub {
-  width:100%; padding:11px; background:transparent; color:var(--ink2);
-  border:1px solid #E8E2D5; border-radius:12px; font-size:14px; cursor:pointer; margin-top:8px;
-}
-</style>
+        .card {
+            background-color: var(--card-bg);
+            border: 3px solid var(--card-border); /* 테두리 굵게 */
+            border-bottom-width: 6px; /* 약간의 3D 효과 피벗 */
+            border-radius: 18px; /* 테두리 둥글게 */
+            padding: 18px; /* 패딩 늘림 */
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 3px 7px rgba(0,0,0,0.07); /* 그림자 진하게 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px; /* 최소 높이 늘림 */
+            user-select: none;
+            font-weight: bold; /* 폰트 굵게 */
+            font-size: 1.1em; /* 폰트 크기 키움 */
+            word-break: keep-all; /* 단어 단위 줄바꿈 */
+            line-height: 1.4; /* 줄 간격 조절 */
+        }
+
+        .card:hover:not(.matched):not(.selected) {
+            border-color: #b0b0b0; /* 호버 시 테두리 색상 진하게 */
+            background-color: #f9f9f9; /* 호버 시 배경색 약간 변경 */
+        }
+
+        /* 선택된 카드 스타일 (메인 컬러 반영) */
+        .card.selected {
+            background-color: var(--main-color-light);
+            border-color: var(--main-color);
+            color: var(--main-color-active);
+            box-shadow: 0 5px 12px rgba(0, 128, 255, 0.2); /* 푸른색 그림자 진하게 */
+        }
+
+        /* 매칭된 카드 스타일 (투명해지며 클릭 불가) */
+        .card.matched {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        /* 틀렸을 때 흔들리는 애니메이션 (유지) */
+        .card.incorrect {
+            animation: shake 0.4s ease-in-out;
+            border-color: #ffb0b0; /* 테두리 색상 조정 */
+            background-color: var(--incorrect-bg);
+            color: var(--incorrect-color);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-7px); } /* 흔들림 강도 피벗 */
+            40%, 80% { transform: translateX(7px); } /* 흔들림 강도 피벗 */
+        }
+
+        /* 제목 카드와 작가 카드를 시각적으로 약간 다르게 구분 (유지) */
+        .card[data-type="title"] {
+            color: #1a1a1a; /* 색상 진하게 */
+        }
+        .card[data-type="author"] {
+            color: #4d4d4d; /* 색상 연하게 */
+            font-style: italic;
+        }
+
+        /* 결과 메시지 스타일 (메인 컬러 반영) */
+        #result-screen h2 {
+            color: var(--main-color);
+            margin-bottom: 15px; /* 여백 늘림 */
+            font-size: 2.5em; /* 폰트 크기 키움 */
+        }
+        #result-screen p {
+            color: var(--text-color-secondary);
+            margin-bottom: 40px; /* 여백 늘림 */
+            font-size: 1.3em; /* 폰트 크기 키움 */
+        }
+
+        /* --- 반응형 레이아웃: PC와 같은 넓은 화면에서는 4열 배치로 변경 --- */
+        @media (min-width: 650px) {
+            #game-board {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .card {
+                padding: 22px;
+                min-height: 100px;
+                font-size: 1.15em;
+                border-radius: 20px;
+            }
+        }
+
+        /* 화면이 아주 작을 때 타이틀 크기 조절 */
+        @media (max-width: 450px) {
+            h1 {
+                font-size: 2em;
+            }
+            .description {
+                font-size: 1em;
+            }
+            .card {
+                padding: 15px;
+                min-height: 80px;
+                font-size: 1em;
+                border-radius: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">사락<span>·</span>퍼즐</div>
-  <div class="header-right">
-    <div class="timer" id="timer">02:00</div>
-    <div class="score-box" id="score">0점</div>
-  </div>
-</div>
-
-<div class="stage-bar">
-  <div class="stage-label" id="stage-label">STAGE 1 / 3</div>
-  <div class="stage-progress"><div class="stage-fill" id="stage-fill" style="width:0%"></div></div>
-  <div class="stage-label" id="found-count">0 / 6</div>
-</div>
-
-<div class="hint-strip">
-  <div class="hint-text" id="hint-text">글자를 하나씩 눌러 단어를 완성하세요</div>
-</div>
-
-<div class="sel-preview">
-  <div class="sel-chars empty" id="sel-preview">글자를 눌러 선택하세요</div>
-</div>
-
-<div class="grid-wrap">
-  <div class="grid" id="grid"></div>
-</div>
-
-<div class="word-list-wrap">
-  <div class="word-list-title">찾을 단어</div>
-  <div class="word-list" id="word-list"></div>
-</div>
-
-<div class="toast" id="toast">
-  <div id="toast-word"></div>
-  <div class="sub" id="toast-sub"></div>
-</div>
-
-<div class="overlay" id="overlay">
-  <div class="card">
-    <div class="c-icon">📚</div>
-    <div class="c-title" id="c-title">스테이지 클리어!</div>
-    <div class="c-sub" id="c-sub">모든 단어를 찾았어요</div>
-    <div class="c-score" id="c-score">0<span>점</span></div>
-    <div class="c-stats">
-      <div class="c-stat"><div class="c-stat-n" id="c-time">--</div><div class="c-stat-l">남은 시간</div></div>
-      <div class="c-stat"><div class="c-stat-n" id="c-bonus">+0</div><div class="c-stat-l">시간 보너스</div></div>
-      <div class="c-stat"><div class="c-stat-n" id="c-stage">1</div><div class="c-stat-l">스테이지</div></div>
+    <div id="start-screen" class="screen">
+        <h1>책 & 작가 맞추기</h1>
+        <p class="description"><strong>사락 문학 퀴즈</strong><br>베스트셀러 책 제목과 작가를 매칭해 보세요.<br>중복 없이 고유한 항목들을 십자말풀이 스타일로 풀어보세요.</p>
+        <button id="start-btn" class="btn-primary">게임 시작</button>
     </div>
-    <button class="btn-main" id="btn-next" onclick="nextStage()">다음 스테이지 →</button>
-    <button class="btn-sub" onclick="retryStage()">다시 도전</button>
-  </div>
-</div>
 
-<script>
-/* ══════════════════════════════════════════
-   스테이지 데이터
-══════════════════════════════════════════ */
-const STAGES = [
-  {
-    label: 'STAGE 1 · 한국 현대문학',
-    hint: '한국 현대소설 작가와 작품들',
-    words: [
-      { word:'김애란', type:'작가', info:'『비행운』' },
-      { word:'한강',   type:'작가', info:'『채식주의자』' },
-      { word:'비행운', type:'작품', info:'김애란' },
-      { word:'이상',   type:'작가', info:'『날개』' },
-      { word:'윤동주', type:'작가', info:'『하늘과 바람과 별과 시』' },
-      { word:'채식',   type:'작품', info:'한강 『채식주의자』' },
-    ],
-    size: 9
-  },
-  {
-    label: 'STAGE 2 · 세계 명작',
-    hint: '세계 문학의 작가와 작품들',
-    words: [
-      { word:'카프카',   type:'작가', info:'『변신』' },
-      { word:'변신',     type:'작품', info:'프란츠 카프카' },
-      { word:'톨스토이', type:'작가', info:'『전쟁과 평화』' },
-      { word:'햄릿',     type:'작품', info:'셰익스피어' },
-      { word:'괴테',     type:'작가', info:'『파우스트』' },
-      { word:'세익스피어',type:'작가',info:'『햄릿』' },
-    ],
-    size: 10
-  },
-  {
-    label: 'STAGE 3 · 베스트셀러',
-    hint: '최근 인기 작가와 베스트셀러',
-    words: [
-      { word:'장강명', type:'작가', info:'『표백』' },
-      { word:'표백',   type:'작품', info:'장강명' },
-      { word:'구병모', type:'작가', info:'『위저드 베이커리』' },
-      { word:'황정은', type:'작가', info:'『백의 그림자』' },
-      { word:'편혜영', type:'작가', info:'『아오이가든』' },
-      { word:'은희경', type:'작가', info:'『새의 선물』' },
-    ],
-    size: 10
-  }
-];
+    <div id="game-screen" class="screen">
+        <div id="game-board"></div>
+    </div>
 
-const FCLS  = ['f0','f1','f2','f3','f4','f5'];
-const CCLS  = ['c0','c1','c2','c3','c4','c5'];
-const MSGS  = ['발견!','찾았다!','정확해요!','훌륭해요!','멋져요!'];
-const FILL  = '가나다라마바사아자차카타파하갈날달말발살알잘찰칼감남담람맘밤삼암잠참강낭당랑망방상앙장창';
+    <div id="result-screen" class="screen">
+        <h2>대단해요! 🎉</h2>
+        <p>모든 문학 짝꿍을 찾았습니다.</p>
+        <button id="restart-btn" class="btn-primary">다시 하기</button>
+    </div>
 
-/* ══════════════════════════════════════════
-   게임 상태
-══════════════════════════════════════════ */
-let stageIdx = 0;
-let G = [];          // G[r][c] = char
-let words = [];
-let found = [];
-let score = 0;
-let timeLeft = 120;
-let timerID = null;
-let N = 9;           // grid size
+    <script>
+        // --- 1. 고유한 게임 데이터 정의 (십자말풀이/중복 제거 핵심) ---
+        
+        // 고유한 책 제목 배열
+        const bookTitles = [
+            "달려라, 아비",
+            "두근두근 내 인생",
+            "채식주의자",
+            "소년이 온다",
+            "파친코",
+            "저주토끼"
+        ];
 
-/* 선택 상태 */
-let selCells = [];   // [{r,c}] — 현재 선택된 셀들 (순서대로)
+        // 고유한 작가 배열 (중복 없음)
+        const authors = [
+            "김애란",
+            "한강",
+            "이민진", 
+            "정보라"
+        ];
 
-/* ══════════════════════════════════════════
-   게임 초기화
-══════════════════════════════════════════ */
-function buildGame(idx) {
-  clearInterval(timerID);
-  const st = STAGES[idx];
-  N     = st.size;
-  words = st.words.map(w => ({...w}));
-  found = [];
-  selCells = [];
-
-  document.getElementById('stage-label').textContent = st.label;
-  document.getElementById('hint-text').textContent   = st.hint;
-  document.getElementById('found-count').textContent = '0 / ' + words.length;
-  document.getElementById('stage-fill').style.width  = '0%';
-  document.getElementById('overlay').classList.remove('show');
-  updatePreview();
-
-  G = makeGrid(N, words);
-  renderGrid();
-  renderChips();
-
-  timeLeft = 120;
-  renderTimer();
-  timerID = setInterval(() => {
-    timeLeft--;
-    renderTimer();
-    if (timeLeft <= 0) { clearInterval(timerID); doTimeout(); }
-  }, 1000);
-}
-
-/* ══════════════════════════════════════════
-   격자 생성
-══════════════════════════════════════════ */
-function makeGrid(n, wds) {
-  const g = Array.from({length:n}, () => Array(n).fill(''));
-  const DIRS = [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
-  for (const wo of wds) {
-    let placed = false, tries = 0;
-    while (!placed && tries < 600) {
-      tries++;
-      const dir = DIRS[Math.floor(Math.random()*8)];
-      const sr  = Math.floor(Math.random()*n);
-      const sc  = Math.floor(Math.random()*n);
-      let ok = true, cs = [];
-      for (let i = 0; i < wo.word.length; i++) {
-        const r = sr+dir[0]*i, c = sc+dir[1]*i;
-        if (r<0||r>=n||c<0||c>=n) { ok=false; break; }
-        if (g[r][c]!==''&&g[r][c]!==wo.word[i]) { ok=false; break; }
-        cs.push([r,c]);
-      }
-      if (ok) { cs.forEach(([r,c],i)=>g[r][c]=wo.word[i]); placed=true; }
-    }
-  }
-  for (let r=0;r<n;r++) for (let c=0;c<n;c++)
-    if (!g[r][c]) g[r][c] = FILL[Math.floor(Math.random()*FILL.length)];
-  return g;
-}
-
-/* ══════════════════════════════════════════
-   격자 렌더
-══════════════════════════════════════════ */
-function renderGrid() {
-  const wrap = document.getElementById('grid-wrap');
-  const el   = document.getElementById('grid');
-  el.innerHTML = '';
-
-  const avail = Math.min(wrap.clientWidth-16, wrap.clientHeight-16);
-  const cs    = Math.max(28, Math.min(42, Math.floor(avail/N)));
-  document.documentElement.style.setProperty('--cell', cs+'px');
-  el.style.gridTemplateColumns = `repeat(${N}, ${cs}px)`;
-  el.style.gap = cs > 34 ? '3px' : '2px';
-
-  for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      const div = document.createElement('div');
-      div.className = 'cell';
-      div.textContent = G[r][c];
-      div.dataset.r = r;
-      div.dataset.c = c;
-      /* 핵심: onclick으로 단순 탭/클릭 처리 */
-      div.addEventListener('click', onCellClick);
-      el.appendChild(div);
-    }
-  }
-}
-
-/* ══════════════════════════════════════════
-   셀 클릭 핸들러
-══════════════════════════════════════════ */
-function onCellClick(e) {
-  const el = e.currentTarget;
-  const r  = +el.dataset.r;
-  const c  = +el.dataset.c;
-
-  /* 이미 찾은 셀이면 무시 */
-  if (FCLS.some(cls => el.classList.contains(cls))) return;
-
-  /* 이미 선택된 셀을 다시 누르면 → 선택 취소 */
-  const existIdx = selCells.findIndex(s => s.r===r && s.c===c);
-  if (existIdx !== -1) {
-    /* 마지막 셀만 취소 허용 (순서 유지) */
-    if (existIdx === selCells.length - 1) {
-      selCells.pop();
-      el.classList.remove('sel');
-      updatePreview();
-    }
-    return;
-  }
-
-  /* 방향 체크: 2번째 이후부터 직선 방향만 허용 */
-  if (selCells.length >= 1) {
-    const first = selCells[0];
-    const last  = selCells[selCells.length-1];
-
-    /* 직선 방향(가로/세로/대각) 위에 있는 셀인지 확인 */
-    if (!isOnLine(first.r, first.c, last.r, last.c, r, c)) {
-      /* 방향이 맞지 않으면 빨간 흔들기 후 무시 */
-      el.classList.add('wrong');
-      setTimeout(() => el.classList.remove('wrong'), 350);
-      return;
-    }
-
-    /* 이미 선택된 셀 사이 건너뛰기 불가: 연속이어야 함 */
-    if (!isAdjacent(last.r, last.c, r, c)) {
-      /* 연속하지 않으면 선택 초기화 후 새 셀로 시작 */
-      clearSelection();
-    }
-  }
-
-  /* 셀 선택 추가 */
-  selCells.push({r, c});
-  el.classList.add('sel');
-  updatePreview();
-
-  /* 선택된 글자가 단어 길이와 맞으면 자동 체크 */
-  autoCheck();
-}
-
-/* 두 셀이 8방향으로 인접한지 */
-function isAdjacent(r1, c1, r2, c2) {
-  return Math.abs(r2-r1) <= 1 && Math.abs(c2-c1) <= 1;
-}
-
-/* (r,c)가 (r1,c1)→(r2,c2) 방향의 연장선 위에 있는지 */
-function isOnLine(r1, c1, r2, c2, r, c) {
-  if (r1===r2 && c1===c2) return true; /* 첫 번째 기준점만 있을 때 */
-  const dr = r2-r1, dc = c2-c1;
-  /* 방향 벡터 정규화 */
-  const len = Math.max(Math.abs(dr), Math.abs(dc));
-  const sr  = dr===0 ? 0 : dr/Math.abs(dr);
-  const sc  = dc===0 ? 0 : dc/Math.abs(dc);
-  /* (r,c)가 (r1,c1)에서 같은 방향에 있어야 함 */
-  const tr = r-r1, tc = c-c1;
-  if (sr===0 && tc!==0 && tr===0) return true; /* 수평 */
-  if (sc===0 && tr!==0 && tc===0) return true; /* 수직 */
-  if (sr!==0 && sc!==0) {
-    /* 대각선: tr/sr === tc/sc 이어야 함 */
-    return tr*sc === tc*sr && tr*sr >= 0 && tc*sc >= 0;
-  }
-  /* sr=0이면 수평: tr must be 0 */
-  if (sr===0) return tr===0;
-  /* sc=0이면 수직: tc must be 0 */
-  if (sc===0) return tc===0;
-  return false;
-}
-
-/* ══════════════════════════════════════════
-   자동 단어 체크
-══════════════════════════════════════════ */
-function autoCheck() {
-  if (selCells.length < 2) return;
-
-  const text = selCells.map(({r,c}) => G[r][c]).join('');
-
-  for (const wo of words) {
-    if (found.includes(wo.word)) continue;
-
-    /* 정방향 또는 역방향 일치 */
-    const rev = [...wo.word].reverse().join('');
-    const match = (wo.word === text) || (rev === text);
-
-    if (match && text.length === wo.word.length) {
-      /* ✅ 찾음! */
-      const ci = found.length;
-      found.push(wo.word);
-
-      selCells.forEach(({r,c}) => {
-        const el = getCellEl(r,c);
-        if (!el) return;
-        el.classList.remove('sel');
-        el.classList.add(FCLS[ci%6], 'pop');
-        el.removeEventListener('click', onCellClick);
-      });
-      selCells = [];
-      updatePreview();
-
-      /* chip */
-      const chip = document.getElementById('chip-'+wo.word);
-      if (chip) chip.className = 'chip '+CCLS[ci%6];
-
-      /* score */
-      const pts = wo.word.length*100 + (timeLeft>60?200:timeLeft>30?100:50);
-      score += pts;
-      document.getElementById('score').textContent = score.toLocaleString()+'점';
-
-      showToast(wo.word+'  '+MSGS[Math.floor(Math.random()*5)],
-                '+'+pts+'점 · '+wo.type+': '+wo.info);
-
-      document.getElementById('stage-fill').style.width  = (found.length/words.length*100)+'%';
-      document.getElementById('found-count').textContent = found.length+' / '+words.length;
-
-      if (found.length === words.length) setTimeout(doComplete, 700);
-      return;
-    }
-
-    /* 현재 입력이 단어의 접두사인지 확인 — 아니면 틀린 경로 */
-    const fwd = wo.word.startsWith(text);
-    const bwd = rev.startsWith(text);
-    if (fwd || bwd) return; /* 아직 진행 중 */
-  }
-
-  /* 어떤 단어의 접두사도 아니면 → 틀림 표시 후 초기화 */
-  selCells.forEach(({r,c}) => {
-    const el = getCellEl(r,c);
-    if (el) { el.classList.add('wrong'); el.classList.remove('sel'); }
-  });
-  setTimeout(() => {
-    selCells.forEach(({r,c}) => {
-      const el = getCellEl(r,c);
-      if (el) el.classList.remove('wrong','sel');
-    });
-    selCells = [];
-    updatePreview();
-  }, 400);
-}
-
-/* ══════════════════════════════════════════
-   선택 초기화
-══════════════════════════════════════════ */
-function clearSelection() {
-  selCells.forEach(({r,c}) => {
-    const el = getCellEl(r,c);
-    if (el) el.classList.remove('sel');
-  });
-  selCells = [];
-  updatePreview();
-}
-
-/* ══════════════════════════════════════════
-   프리뷰 업데이트
-══════════════════════════════════════════ */
-function updatePreview() {
-  const el = document.getElementById('sel-preview');
-  if (selCells.length === 0) {
-    el.className = 'sel-chars empty';
-    el.textContent = '글자를 눌러 선택하세요';
-  } else {
-    el.className = 'sel-chars';
-    el.textContent = selCells.map(({r,c}) => G[r][c]).join(' ');
-  }
-}
-
-/* ══════════════════════════════════════════
-   헬퍼
-══════════════════════════════════════════ */
-function getCellEl(r, c) {
-  return document.querySelector(`#grid [data-r="${r}"][data-c="${c}"]`);
-}
-
-function renderChips() {
-  const el = document.getElementById('word-list');
-  el.innerHTML = '';
-  words.forEach(wo => {
-    const d = document.createElement('div');
-    d.className = 'chip';
-    d.id = 'chip-'+wo.word;
-    d.innerHTML = wo.word+' <span style="font-size:10px;opacity:.5;font-family:\'Noto Sans KR\'">'+wo.type+'</span>';
-    el.appendChild(d);
-  });
-}
-
-function renderTimer() {
-  const m  = Math.floor(timeLeft/60).toString().padStart(2,'0');
-  const s  = (timeLeft%60).toString().padStart(2,'0');
-  const el = document.getElementById('timer');
-  el.textContent = m+':'+s;
-  el.style.color = timeLeft<=30 ? '#E24B4A' : 'var(--accent)';
-}
-
-function showToast(word, sub) {
-  const t = document.getElementById('toast');
-  document.getElementById('toast-word').textContent = word;
-  document.getElementById('toast-sub').textContent  = sub;
-  t.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-/* ══════════════════════════════════════════
-   완료 / 타임아웃
-══════════════════════════════════════════ */
-function doComplete() {
-  clearInterval(timerID);
-  const bonus = Math.floor(timeLeft*5);
-  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
-  const s = (timeLeft%60).toString().padStart(2,'0');
-  document.getElementById('c-title').textContent  = stageIdx<STAGES.length-1 ? '스테이지 클리어! 🎉':'전 스테이지 완료! 🏆';
-  document.getElementById('c-sub').textContent    = '모든 '+words.length+'개 단어를 찾았어요';
-  document.getElementById('c-score').innerHTML    = (score+bonus).toLocaleString()+'<span>점</span>';
-  document.getElementById('c-time').textContent   = m+':'+s;
-  document.getElementById('c-bonus').textContent  = '+'+bonus;
-  document.getElementById('c-stage').textContent  = stageIdx+1;
-  document.getElementById('btn-next').textContent = stageIdx>=STAGES.length-1?'처음부터 다시 →':'다음 스테이지 →';
-  document.getElementById('overlay').classList.add('show');
-}
-
-function doTimeout() {
-  document.getElementById('c-title').textContent  = '시간 초과! ⏰';
-  document.getElementById('c-sub').textContent    = found.length+'개 / '+words.length+'개 발견';
-  document.getElementById('c-score').innerHTML    = score.toLocaleString()+'<span>점</span>';
-  document.getElementById('c-time').textContent   = '00:00';
-  document.getElementById('c-bonus').textContent  = '+0';
-  document.getElementById('c-stage').textContent  = stageIdx+1;
-  document.getElementById('btn-next').textContent = '다시 도전 →';
-  document.getElementById('overlay').classList.add('show');
-}
-
-function nextStage() {
-  if (stageIdx>=STAGES.length-1) { stageIdx=0; score=0; document.getElementById('score').textContent='0점'; }
-  else stageIdx++;
-  buildGame(stageIdx);
-}
-
-function retryStage() {
-  score = Math.max(0,score-200);
-  document.getElementById('score').textContent = score.toLocaleString()+'점';
-  buildGame(stageIdx);
-}
-
-window.addEventListener('resize', () => {
-  const wrap  = document.getElementById('grid-wrap');
-  const avail = Math.min(wrap.clientWidth-16, wrap.clientHeight-16);
-  const cs    = Math.max(28, Math.min(42, Math.floor(avail/N)));
-  document.documentElement.style.setProperty('--cell', cs+'px');
-});
-
-buildGame(0);
-</script>
-</body>
-</html>
+        // 책 제목 -> 정답 작가 매핑 데이터 (매칭 확인용)
+        const bookToAuthorMap = {
+            "달려라, 아비": "김애란",
+            "두근두근 내 인생": "김애란",
