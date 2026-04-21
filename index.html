@@ -17,7 +17,7 @@
   --cell: 36px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; touch-action: none; }
+html, body { height: 100%; overflow: hidden; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background: var(--bg);
@@ -29,15 +29,14 @@ body {
   margin: 0 auto;
   overflow: hidden;
 }
+
+/* ── header ─────────────────────────────── */
 .header {
-  width: 100%;
-  padding: 16px 20px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  width: 100%; padding: 16px 20px 8px;
+  display: flex; align-items: center; justify-content: space-between;
   flex-shrink: 0;
 }
-.logo { font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
+.logo { font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 22px; letter-spacing: -.5px; }
 .logo span { color: var(--accent); }
 .header-right { display: flex; align-items: center; gap: 12px; }
 .score-box {
@@ -49,6 +48,8 @@ body {
   font-size: 15px; font-weight: 500; color: var(--accent);
   font-family: 'Nanum Myeongjo', serif; min-width: 46px; text-align: right;
 }
+
+/* ── stage bar ───────────────────────────── */
 .stage-bar {
   width: 100%; padding: 0 20px 8px;
   display: flex; align-items: center; gap: 10px; flex-shrink: 0;
@@ -56,62 +57,105 @@ body {
 .stage-label { font-size: 11px; font-weight: 500; color: var(--ink3); letter-spacing: .05em; white-space: nowrap; }
 .stage-progress { flex: 1; height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
 .stage-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
-.hint-strip { width: 100%; padding: 0 20px 8px; flex-shrink: 0; }
+
+/* ── hint ────────────────────────────────── */
+.hint-strip { width: 100%; padding: 0 20px 6px; flex-shrink: 0; }
 .hint-text { font-size: 12px; color: var(--ink3); text-align: center; font-style: italic; }
+
+/* ── selected word preview ───────────────── */
+.sel-preview {
+  width: 100%; padding: 0 20px 6px;
+  flex-shrink: 0; text-align: center; min-height: 28px;
+}
+.sel-chars {
+  display: inline-flex; gap: 4px; align-items: center;
+  background: #fff; border: 1px solid var(--accent);
+  border-radius: 20px; padding: 3px 14px;
+  font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 700;
+  color: var(--accent); min-width: 40px; justify-content: center;
+  transition: all .15s;
+}
+.sel-chars.empty { border-color: #E8E2D5; color: var(--ink3); background: transparent; font-size: 12px; font-family: 'Noto Sans KR'; font-weight: 400; }
+
+/* ── grid ────────────────────────────────── */
 .grid-wrap {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 0 8px; overflow: hidden; width: 100%;
 }
-/* CRITICAL: grid gets all pointer events; cells block none */
 .grid {
-  display: grid; gap: 2px;
-  touch-action: none; user-select: none; -webkit-user-select: none;
-  cursor: default;
+  display: grid; gap: 3px;
+  user-select: none; -webkit-user-select: none;
 }
 .cell {
   width: var(--cell); height: var(--cell);
   display: flex; align-items: center; justify-content: center;
   font-family: 'Nanum Myeongjo', serif; font-size: 15px; font-weight: 700;
-  border-radius: 6px; background: #fff; border: 1px solid #EDE8DF;
-  color: var(--ink); transition: background .08s;
-  pointer-events: none; /* let grid handle all events */
+  border-radius: 7px; background: #fff; border: 1.5px solid #EDE8DF;
+  color: var(--ink); cursor: pointer;
+  transition: background .1s, transform .1s, border-color .1s;
+  /* ensure each cell is tappable */
+  -webkit-tap-highlight-color: transparent;
 }
-.cell.sel { background: #FFE8DC !important; border-color: var(--accent) !important; }
-.cell.found-0 { background: #FFE8DC; border-color: #C8623A; color: #7A3010; }
-.cell.found-1 { background: #FFF3DC; border-color: #C49A3C; color: #7A5A10; }
-.cell.found-2 { background: #DCF0E4; border-color: #4A8C64; color: #1A5035; }
-.cell.found-3 { background: #EAE0F5; border-color: #7B5EA7; color: #3A1A70; }
-.cell.found-4 { background: #DCEEF8; border-color: #4A7CA8; color: #1A3A60; }
-.cell.found-5 { background: #F5E0E8; border-color: #A84A6A; color: #6A1A30; }
+.cell:active { transform: scale(.92); }
+
+/* selected (in progress) */
+.cell.sel {
+  background: #FFE8DC;
+  border-color: var(--accent);
+  transform: scale(1.08);
+  z-index: 2;
+  position: relative;
+}
+
+/* found colors */
+.cell.f0 { background: #FFE8DC; border-color: #C8623A; color: #7A3010; cursor: default; }
+.cell.f1 { background: #FFF3DC; border-color: #C49A3C; color: #7A5A10; cursor: default; }
+.cell.f2 { background: #DCF0E4; border-color: #4A8C64; color: #1A5035; cursor: default; }
+.cell.f3 { background: #EAE0F5; border-color: #7B5EA7; color: #3A1A70; cursor: default; }
+.cell.f4 { background: #DCEEF8; border-color: #4A7CA8; color: #1A3A60; cursor: default; }
+.cell.f5 { background: #F5E0E8; border-color: #A84A6A; color: #6A1A30; cursor: default; }
+
+/* wrong shake */
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+.cell.wrong { animation: shake .3s ease; background: #FDEAEA; border-color: #E24B4A; }
+
+/* found pop */
 @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
 .cell.pop { animation: pop .3s ease; }
+
+/* ── word list ───────────────────────────── */
 .word-list-wrap {
-  width: 100%; padding: 10px 20px 14px; flex-shrink: 0;
+  width: 100%; padding: 10px 20px 12px; flex-shrink: 0;
   background: var(--bg2); border-top: 1px solid #E8E2D5;
 }
 .word-list-title { font-size: 11px; font-weight: 500; color: var(--ink3); letter-spacing: .05em; margin-bottom: 8px; }
 .word-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.word-chip {
+.chip {
   padding: 4px 12px; border-radius: 20px;
   font-size: 13px; font-family: 'Nanum Myeongjo', serif; font-weight: 700;
   background: #fff; border: 1px solid #D8D2C5; color: var(--ink2); transition: all .3s;
 }
-.found-chip-0 { background:#FFE8DC; border-color:#C8623A; color:#7A3010; text-decoration:line-through; }
-.found-chip-1 { background:#FFF3DC; border-color:#C49A3C; color:#7A5A10; text-decoration:line-through; }
-.found-chip-2 { background:#DCF0E4; border-color:#4A8C64; color:#1A5035; text-decoration:line-through; }
-.found-chip-3 { background:#EAE0F5; border-color:#7B5EA7; color:#3A1A70; text-decoration:line-through; }
-.found-chip-4 { background:#DCEEF8; border-color:#4A7CA8; color:#1A3A60; text-decoration:line-through; }
-.found-chip-5 { background:#F5E0E8; border-color:#A84A6A; color:#6A1A30; text-decoration:line-through; }
+.chip.c0 { background:#FFE8DC; border-color:#C8623A; color:#7A3010; text-decoration:line-through; }
+.chip.c1 { background:#FFF3DC; border-color:#C49A3C; color:#7A5A10; text-decoration:line-through; }
+.chip.c2 { background:#DCF0E4; border-color:#4A8C64; color:#1A5035; text-decoration:line-through; }
+.chip.c3 { background:#EAE0F5; border-color:#7B5EA7; color:#3A1A70; text-decoration:line-through; }
+.chip.c4 { background:#DCEEF8; border-color:#4A7CA8; color:#1A3A60; text-decoration:line-through; }
+.chip.c5 { background:#F5E0E8; border-color:#A84A6A; color:#6A1A30; text-decoration:line-through; }
+
+/* ── toast ───────────────────────────────── */
 .toast {
   position: fixed; top: 44%; left: 50%;
   transform: translate(-50%,-50%) scale(.8);
   background: var(--ink); color: var(--bg);
   padding: 13px 26px; border-radius: 16px;
   font-family: 'Nanum Myeongjo', serif; font-size: 18px; font-weight: 700;
-  opacity: 0; pointer-events: none; transition: all .2s; z-index: 100; text-align: center; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: all .2s; z-index: 100;
+  text-align: center; white-space: nowrap;
 }
 .toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
 .toast .sub { font-size: 12px; font-weight: 400; font-family: 'Noto Sans KR'; margin-top: 4px; color: var(--accent2); }
+
+/* ── complete overlay ───────────────────── */
 .overlay {
   position: fixed; inset: 0; background: rgba(30,26,20,.85);
   display: flex; align-items: center; justify-content: center;
@@ -124,9 +168,9 @@ body {
 }
 .c-icon { font-size: 44px; margin-bottom: 10px; }
 .c-title { font-family:'Nanum Myeongjo',serif; font-size:22px; font-weight:800; margin-bottom:4px; }
-.c-sub { font-size: 13px; color: var(--ink2); margin-bottom: 4px; }
+.c-sub { font-size:13px; color:var(--ink2); margin-bottom:4px; }
 .c-score { font-family:'Nanum Myeongjo',serif; font-size:34px; font-weight:800; color:var(--accent); margin:14px 0; }
-.c-score span { font-size: 14px; color: var(--ink3); }
+.c-score span { font-size:14px; color:var(--ink3); }
 .c-stats { display:flex; justify-content:center; gap:24px; margin-bottom:20px; }
 .c-stat { text-align:center; }
 .c-stat-n { font-size:18px; font-weight:700; font-family:'Nanum Myeongjo',serif; }
@@ -159,10 +203,14 @@ body {
 </div>
 
 <div class="hint-strip">
-  <div class="hint-text" id="hint-text">책 제목과 작가 이름을 찾아보세요 — 가로·세로·대각선</div>
+  <div class="hint-text" id="hint-text">글자를 하나씩 눌러 단어를 완성하세요</div>
 </div>
 
-<div class="grid-wrap" id="grid-wrap">
+<div class="sel-preview">
+  <div class="sel-chars empty" id="sel-preview">글자를 눌러 선택하세요</div>
+</div>
+
+<div class="grid-wrap">
   <div class="grid" id="grid"></div>
 </div>
 
@@ -193,7 +241,9 @@ body {
 </div>
 
 <script>
-/* ── 스테이지 데이터 ─────────────────────── */
+/* ══════════════════════════════════════════
+   스테이지 데이터
+══════════════════════════════════════════ */
 const STAGES = [
   {
     label: 'STAGE 1 · 한국 현대문학',
@@ -217,7 +267,7 @@ const STAGES = [
       { word:'톨스토이', type:'작가', info:'『전쟁과 평화』' },
       { word:'햄릿',     type:'작품', info:'셰익스피어' },
       { word:'괴테',     type:'작가', info:'『파우스트』' },
-      { word:'세르반테스',type:'작가', info:'『돈키호테』' },
+      { word:'세익스피어',type:'작가',info:'『햄릿』' },
     ],
     size: 10
   },
@@ -236,44 +286,45 @@ const STAGES = [
   }
 ];
 
-const FOUND_CLS    = ['found-0','found-1','found-2','found-3','found-4','found-5'];
-const CHIP_CLS     = ['found-chip-0','found-chip-1','found-chip-2','found-chip-3','found-chip-4','found-chip-5'];
-const MSGS         = ['발견!','찾았다!','정확해요!','훌륭해요!','멋져요!'];
-const FILL         = '가나다라마바사아자차카타파하갈날달말발살알잘찰칼감남담람맘밤삼암잠참강낭당랑망방상앙장';
+const FCLS  = ['f0','f1','f2','f3','f4','f5'];
+const CCLS  = ['c0','c1','c2','c3','c4','c5'];
+const MSGS  = ['발견!','찾았다!','정확해요!','훌륭해요!','멋져요!'];
+const FILL  = '가나다라마바사아자차카타파하갈날달말발살알잘찰칼감남담람맘밤삼암잠참강낭당랑망방상앙장창';
 
-/* ── 게임 상태 ─────────────────────────── */
-let stageIdx   = 0;
-let gridArr    = [];   // [row][col] = char
-let words      = [];   // [{word,type,info}]
-let found      = [];   // found word strings
-let score      = 0;
-let timeLeft   = 120;
-let timerID    = null;
-let gridSize   = 9;
+/* ══════════════════════════════════════════
+   게임 상태
+══════════════════════════════════════════ */
+let stageIdx = 0;
+let G = [];          // G[r][c] = char
+let words = [];
+let found = [];
+let score = 0;
+let timeLeft = 120;
+let timerID = null;
+let N = 9;           // grid size
 
-/* drag */
-let dragging  = false;
-let startR    = -1;
-let startC    = -1;
-let selSet    = new Set(); // "r,c" currently highlighted sel
+/* 선택 상태 */
+let selCells = [];   // [{r,c}] — 현재 선택된 셀들 (순서대로)
 
-/* ── 게임 빌드 ─────────────────────────── */
+/* ══════════════════════════════════════════
+   게임 초기화
+══════════════════════════════════════════ */
 function buildGame(idx) {
   clearInterval(timerID);
-  const st  = STAGES[idx];
-  gridSize  = st.size;
-  words     = st.words.map(w => ({...w}));
-  found     = [];
-  dragging  = false;
-  selSet.clear();
+  const st = STAGES[idx];
+  N     = st.size;
+  words = st.words.map(w => ({...w}));
+  found = [];
+  selCells = [];
 
   document.getElementById('stage-label').textContent = st.label;
   document.getElementById('hint-text').textContent   = st.hint;
   document.getElementById('found-count').textContent = '0 / ' + words.length;
   document.getElementById('stage-fill').style.width  = '0%';
   document.getElementById('overlay').classList.remove('show');
+  updatePreview();
 
-  gridArr = makeGrid(gridSize, words);
+  G = makeGrid(N, words);
   renderGrid();
   renderChips();
 
@@ -286,20 +337,22 @@ function buildGame(idx) {
   }, 1000);
 }
 
-/* ── 격자 생성 ─────────────────────────── */
+/* ══════════════════════════════════════════
+   격자 생성
+══════════════════════════════════════════ */
 function makeGrid(n, wds) {
   const g = Array.from({length:n}, () => Array(n).fill(''));
   const DIRS = [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
   for (const wo of wds) {
     let placed = false, tries = 0;
-    while (!placed && tries < 500) {
+    while (!placed && tries < 600) {
       tries++;
-      const dir = DIRS[Math.floor(Math.random() * 8)];
-      const sr  = Math.floor(Math.random() * n);
-      const sc  = Math.floor(Math.random() * n);
+      const dir = DIRS[Math.floor(Math.random()*8)];
+      const sr  = Math.floor(Math.random()*n);
+      const sc  = Math.floor(Math.random()*n);
       let ok = true, cs = [];
       for (let i = 0; i < wo.word.length; i++) {
-        const r = sr + dir[0]*i, c = sc + dir[1]*i;
+        const r = sr+dir[0]*i, c = sc+dir[1]*i;
         if (r<0||r>=n||c<0||c>=n) { ok=false; break; }
         if (g[r][c]!==''&&g[r][c]!==wo.word[i]) { ok=false; break; }
         cs.push([r,c]);
@@ -312,226 +365,261 @@ function makeGrid(n, wds) {
   return g;
 }
 
-/* ── 격자 렌더 ─────────────────────────── */
+/* ══════════════════════════════════════════
+   격자 렌더
+══════════════════════════════════════════ */
 function renderGrid() {
   const wrap = document.getElementById('grid-wrap');
   const el   = document.getElementById('grid');
   el.innerHTML = '';
 
-  const avail = Math.min(wrap.clientWidth - 16, wrap.clientHeight - 16);
-  const cs    = Math.max(28, Math.min(40, Math.floor(avail / gridSize)));
-  document.documentElement.style.setProperty('--cell', cs + 'px');
-  el.style.gridTemplateColumns = `repeat(${gridSize}, ${cs}px)`;
-  el.style.gap = cs > 34 ? '2px' : '1px';
+  const avail = Math.min(wrap.clientWidth-16, wrap.clientHeight-16);
+  const cs    = Math.max(28, Math.min(42, Math.floor(avail/N)));
+  document.documentElement.style.setProperty('--cell', cs+'px');
+  el.style.gridTemplateColumns = `repeat(${N}, ${cs}px)`;
+  el.style.gap = cs > 34 ? '3px' : '2px';
 
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
       const div = document.createElement('div');
       div.className = 'cell';
-      div.textContent = gridArr[r][c];
+      div.textContent = G[r][c];
       div.dataset.r = r;
       div.dataset.c = c;
+      /* 핵심: onclick으로 단순 탭/클릭 처리 */
+      div.addEventListener('click', onCellClick);
       el.appendChild(div);
     }
   }
-
-  /* ── Single pointer listener on the GRID element ── */
-  /* Using onpointerdown/move/up properties for simplicity */
-  el.onpointerdown  = onDown;
-  el.onpointermove  = onMove;
-  el.onpointerup    = onUp;
-  el.onpointercancel = onCancel;
 }
 
-/* ── 포인터 → 셀 변환 ──────────────────── */
-function rcFromEvent(e) {
-  /* Walk the grid's children to find which cell contains this point */
-  const el = document.getElementById('grid');
-  const children = el.children;
-  for (let i = 0; i < children.length; i++) {
-    const rect = children[i].getBoundingClientRect();
-    if (e.clientX >= rect.left && e.clientX <= rect.right &&
-        e.clientY >= rect.top  && e.clientY <= rect.bottom) {
-      return { r: +children[i].dataset.r, c: +children[i].dataset.c };
+/* ══════════════════════════════════════════
+   셀 클릭 핸들러
+══════════════════════════════════════════ */
+function onCellClick(e) {
+  const el = e.currentTarget;
+  const r  = +el.dataset.r;
+  const c  = +el.dataset.c;
+
+  /* 이미 찾은 셀이면 무시 */
+  if (FCLS.some(cls => el.classList.contains(cls))) return;
+
+  /* 이미 선택된 셀을 다시 누르면 → 선택 취소 */
+  const existIdx = selCells.findIndex(s => s.r===r && s.c===c);
+  if (existIdx !== -1) {
+    /* 마지막 셀만 취소 허용 (순서 유지) */
+    if (existIdx === selCells.length - 1) {
+      selCells.pop();
+      el.classList.remove('sel');
+      updatePreview();
+    }
+    return;
+  }
+
+  /* 방향 체크: 2번째 이후부터 직선 방향만 허용 */
+  if (selCells.length >= 1) {
+    const first = selCells[0];
+    const last  = selCells[selCells.length-1];
+
+    /* 직선 방향(가로/세로/대각) 위에 있는 셀인지 확인 */
+    if (!isOnLine(first.r, first.c, last.r, last.c, r, c)) {
+      /* 방향이 맞지 않으면 빨간 흔들기 후 무시 */
+      el.classList.add('wrong');
+      setTimeout(() => el.classList.remove('wrong'), 350);
+      return;
+    }
+
+    /* 이미 선택된 셀 사이 건너뛰기 불가: 연속이어야 함 */
+    if (!isAdjacent(last.r, last.c, r, c)) {
+      /* 연속하지 않으면 선택 초기화 후 새 셀로 시작 */
+      clearSelection();
     }
   }
-  return null;
+
+  /* 셀 선택 추가 */
+  selCells.push({r, c});
+  el.classList.add('sel');
+  updatePreview();
+
+  /* 선택된 글자가 단어 길이와 맞으면 자동 체크 */
+  autoCheck();
 }
 
-/* ── 직선 경로 계산 ────────────────────── */
-function lineBetween(sr, sc, er, ec) {
-  const dr = er - sr, dc = ec - sc;
-  if (dr === 0 && dc === 0) return [{r:sr,c:sc}];
-  /* snap to 8-directional */
-  let fr = dr, fc = dc;
-  if (Math.abs(dr) !== Math.abs(dc) && dr !== 0 && dc !== 0) {
-    if (Math.abs(dr) >= Math.abs(dc)) fc = 0; else fr = 0;
+/* 두 셀이 8방향으로 인접한지 */
+function isAdjacent(r1, c1, r2, c2) {
+  return Math.abs(r2-r1) <= 1 && Math.abs(c2-c1) <= 1;
+}
+
+/* (r,c)가 (r1,c1)→(r2,c2) 방향의 연장선 위에 있는지 */
+function isOnLine(r1, c1, r2, c2, r, c) {
+  if (r1===r2 && c1===c2) return true; /* 첫 번째 기준점만 있을 때 */
+  const dr = r2-r1, dc = c2-c1;
+  /* 방향 벡터 정규화 */
+  const len = Math.max(Math.abs(dr), Math.abs(dc));
+  const sr  = dr===0 ? 0 : dr/Math.abs(dr);
+  const sc  = dc===0 ? 0 : dc/Math.abs(dc);
+  /* (r,c)가 (r1,c1)에서 같은 방향에 있어야 함 */
+  const tr = r-r1, tc = c-c1;
+  if (sr===0 && tc!==0 && tr===0) return true; /* 수평 */
+  if (sc===0 && tr!==0 && tc===0) return true; /* 수직 */
+  if (sr!==0 && sc!==0) {
+    /* 대각선: tr/sr === tc/sc 이어야 함 */
+    return tr*sc === tc*sr && tr*sr >= 0 && tc*sc >= 0;
   }
-  const len  = Math.max(Math.abs(fr), Math.abs(fc));
-  const stepR = fr === 0 ? 0 : fr / Math.abs(fr);
-  const stepC = fc === 0 ? 0 : fc / Math.abs(fc);
-  const cells = [];
-  for (let i = 0; i <= len; i++) cells.push({r: sr + stepR*i, c: sc + stepC*i});
-  return cells;
+  /* sr=0이면 수평: tr must be 0 */
+  if (sr===0) return tr===0;
+  /* sc=0이면 수직: tc must be 0 */
+  if (sc===0) return tc===0;
+  return false;
 }
 
-/* ── 드래그 핸들러 ─────────────────────── */
-function onDown(e) {
-  e.preventDefault();
-  const rc = rcFromEvent(e);
-  if (!rc) return;
-  dragging = true;
-  startR   = rc.r;
-  startC   = rc.c;
-  document.getElementById('grid').setPointerCapture(e.pointerId);
-  paintSel([{r:startR, c:startC}]);
-}
+/* ══════════════════════════════════════════
+   자동 단어 체크
+══════════════════════════════════════════ */
+function autoCheck() {
+  if (selCells.length < 2) return;
 
-function onMove(e) {
-  if (!dragging) return;
-  e.preventDefault();
-  const rc = rcFromEvent(e);
-  if (!rc) return;
-  const line = lineBetween(startR, startC, rc.r, rc.c);
-  paintSel(line);
-}
-
-function onUp(e) {
-  if (!dragging) return;
-  e.preventDefault();
-  dragging = false;
-  checkWord();
-  clearSel();
-}
-
-function onCancel(e) {
-  dragging = false;
-  clearSel();
-}
-
-/* ── 선택 색칠 ─────────────────────────── */
-function iFound(el) { return FOUND_CLS.some(c => el.classList.contains(c)); }
-
-function paintSel(line) {
-  /* remove old sel */
-  selSet.forEach(key => {
-    const [r,c] = key.split(',').map(Number);
-    const el = getCellEl(r, c);
-    if (el && !iFound(el)) el.classList.remove('sel');
-  });
-  selSet.clear();
-  /* add new sel */
-  line.forEach(({r,c}) => {
-    const el = getCellEl(r, c);
-    if (!el) return;
-    if (!iFound(el)) el.classList.add('sel');
-    selSet.add(r+','+c);
-  });
-}
-
-function clearSel() {
-  selSet.forEach(key => {
-    const [r,c] = key.split(',').map(Number);
-    const el = getCellEl(r, c);
-    if (el && !iFound(el)) el.classList.remove('sel');
-  });
-  selSet.clear();
-}
-
-function getCellEl(r, c) {
-  return document.querySelector(`#grid [data-r="${r}"][data-c="${c}"]`);
-}
-
-/* ── 단어 체크 ─────────────────────────── */
-function checkWord() {
-  if (selSet.size < 1) return;
-  const keys  = [...selSet];
-  const chars = keys.map(k => { const [r,c]=k.split(',').map(Number); return gridArr[r][c]; });
-  const text  = chars.join('');
-  const rev   = [...text].reverse().join('');
+  const text = selCells.map(({r,c}) => G[r][c]).join('');
 
   for (const wo of words) {
     if (found.includes(wo.word)) continue;
-    if (wo.word === text || wo.word === rev) {
-      const ci  = found.length;
+
+    /* 정방향 또는 역방향 일치 */
+    const rev = [...wo.word].reverse().join('');
+    const match = (wo.word === text) || (rev === text);
+
+    if (match && text.length === wo.word.length) {
+      /* ✅ 찾음! */
+      const ci = found.length;
       found.push(wo.word);
 
-      /* colour found cells */
-      keys.forEach(key => {
-        const [r,c] = key.split(',').map(Number);
+      selCells.forEach(({r,c}) => {
         const el = getCellEl(r,c);
         if (!el) return;
         el.classList.remove('sel');
-        el.classList.add(FOUND_CLS[ci % 6], 'pop');
+        el.classList.add(FCLS[ci%6], 'pop');
+        el.removeEventListener('click', onCellClick);
       });
+      selCells = [];
+      updatePreview();
 
       /* chip */
-      const chip = document.getElementById('chip-' + wo.word);
-      if (chip) chip.className = 'word-chip ' + CHIP_CLS[ci % 6];
+      const chip = document.getElementById('chip-'+wo.word);
+      if (chip) chip.className = 'chip '+CCLS[ci%6];
 
       /* score */
-      const pts = wo.word.length * 100 + (timeLeft > 60 ? 200 : timeLeft > 30 ? 100 : 50);
+      const pts = wo.word.length*100 + (timeLeft>60?200:timeLeft>30?100:50);
       score += pts;
-      document.getElementById('score').textContent = score.toLocaleString() + '점';
+      document.getElementById('score').textContent = score.toLocaleString()+'점';
 
-      toast(wo.word + '  ' + MSGS[Math.floor(Math.random()*5)],
-            '+' + pts + '점 · ' + wo.type + ': ' + wo.info);
+      showToast(wo.word+'  '+MSGS[Math.floor(Math.random()*5)],
+                '+'+pts+'점 · '+wo.type+': '+wo.info);
 
-      const prog = found.length / words.length;
-      document.getElementById('stage-fill').style.width  = (prog*100)+'%';
+      document.getElementById('stage-fill').style.width  = (found.length/words.length*100)+'%';
       document.getElementById('found-count').textContent = found.length+' / '+words.length;
 
       if (found.length === words.length) setTimeout(doComplete, 700);
       return;
     }
+
+    /* 현재 입력이 단어의 접두사인지 확인 — 아니면 틀린 경로 */
+    const fwd = wo.word.startsWith(text);
+    const bwd = rev.startsWith(text);
+    if (fwd || bwd) return; /* 아직 진행 중 */
+  }
+
+  /* 어떤 단어의 접두사도 아니면 → 틀림 표시 후 초기화 */
+  selCells.forEach(({r,c}) => {
+    const el = getCellEl(r,c);
+    if (el) { el.classList.add('wrong'); el.classList.remove('sel'); }
+  });
+  setTimeout(() => {
+    selCells.forEach(({r,c}) => {
+      const el = getCellEl(r,c);
+      if (el) el.classList.remove('wrong','sel');
+    });
+    selCells = [];
+    updatePreview();
+  }, 400);
+}
+
+/* ══════════════════════════════════════════
+   선택 초기화
+══════════════════════════════════════════ */
+function clearSelection() {
+  selCells.forEach(({r,c}) => {
+    const el = getCellEl(r,c);
+    if (el) el.classList.remove('sel');
+  });
+  selCells = [];
+  updatePreview();
+}
+
+/* ══════════════════════════════════════════
+   프리뷰 업데이트
+══════════════════════════════════════════ */
+function updatePreview() {
+  const el = document.getElementById('sel-preview');
+  if (selCells.length === 0) {
+    el.className = 'sel-chars empty';
+    el.textContent = '글자를 눌러 선택하세요';
+  } else {
+    el.className = 'sel-chars';
+    el.textContent = selCells.map(({r,c}) => G[r][c]).join(' ');
   }
 }
 
-/* ── 칩 렌더 ───────────────────────────── */
+/* ══════════════════════════════════════════
+   헬퍼
+══════════════════════════════════════════ */
+function getCellEl(r, c) {
+  return document.querySelector(`#grid [data-r="${r}"][data-c="${c}"]`);
+}
+
 function renderChips() {
   const el = document.getElementById('word-list');
   el.innerHTML = '';
   words.forEach(wo => {
     const d = document.createElement('div');
-    d.className = 'word-chip';
-    d.id = 'chip-' + wo.word;
-    d.innerHTML = wo.word + ' <span style="font-size:10px;opacity:.5;font-family:\'Noto Sans KR\'">' + wo.type + '</span>';
+    d.className = 'chip';
+    d.id = 'chip-'+wo.word;
+    d.innerHTML = wo.word+' <span style="font-size:10px;opacity:.5;font-family:\'Noto Sans KR\'">'+wo.type+'</span>';
     el.appendChild(d);
   });
 }
 
-/* ── 타이머 ────────────────────────────── */
 function renderTimer() {
-  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
-  const s = (timeLeft%60).toString().padStart(2,'0');
+  const m  = Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s  = (timeLeft%60).toString().padStart(2,'0');
   const el = document.getElementById('timer');
   el.textContent = m+':'+s;
-  el.style.color = timeLeft <= 30 ? '#E24B4A' : 'var(--accent)';
+  el.style.color = timeLeft<=30 ? '#E24B4A' : 'var(--accent)';
 }
 
-/* ── 토스트 ────────────────────────────── */
-function toast(word, sub) {
+function showToast(word, sub) {
   const t = document.getElementById('toast');
   document.getElementById('toast-word').textContent = word;
   document.getElementById('toast-sub').textContent  = sub;
   t.classList.add('show');
-  clearTimeout(toast._tid);
-  toast._tid = setTimeout(() => t.classList.remove('show'), 2000);
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-/* ── 완료/타임아웃 오버레이 ────────────── */
+/* ══════════════════════════════════════════
+   완료 / 타임아웃
+══════════════════════════════════════════ */
 function doComplete() {
   clearInterval(timerID);
-  const bonus = Math.floor(timeLeft * 5);
+  const bonus = Math.floor(timeLeft*5);
   const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
   const s = (timeLeft%60).toString().padStart(2,'0');
-  document.getElementById('c-title').textContent  = stageIdx < STAGES.length-1 ? '스테이지 클리어! 🎉' : '전 스테이지 완료! 🏆';
+  document.getElementById('c-title').textContent  = stageIdx<STAGES.length-1 ? '스테이지 클리어! 🎉':'전 스테이지 완료! 🏆';
   document.getElementById('c-sub').textContent    = '모든 '+words.length+'개 단어를 찾았어요';
   document.getElementById('c-score').innerHTML    = (score+bonus).toLocaleString()+'<span>점</span>';
   document.getElementById('c-time').textContent   = m+':'+s;
   document.getElementById('c-bonus').textContent  = '+'+bonus;
   document.getElementById('c-stage').textContent  = stageIdx+1;
-  document.getElementById('btn-next').textContent = stageIdx >= STAGES.length-1 ? '처음부터 다시 →' : '다음 스테이지 →';
+  document.getElementById('btn-next').textContent = stageIdx>=STAGES.length-1?'처음부터 다시 →':'다음 스테이지 →';
   document.getElementById('overlay').classList.add('show');
 }
 
@@ -547,13 +635,13 @@ function doTimeout() {
 }
 
 function nextStage() {
-  if (stageIdx >= STAGES.length-1) { stageIdx=0; score=0; document.getElementById('score').textContent='0점'; }
+  if (stageIdx>=STAGES.length-1) { stageIdx=0; score=0; document.getElementById('score').textContent='0점'; }
   else stageIdx++;
   buildGame(stageIdx);
 }
 
 function retryStage() {
-  score = Math.max(0, score-200);
+  score = Math.max(0,score-200);
   document.getElementById('score').textContent = score.toLocaleString()+'점';
   buildGame(stageIdx);
 }
@@ -561,7 +649,7 @@ function retryStage() {
 window.addEventListener('resize', () => {
   const wrap  = document.getElementById('grid-wrap');
   const avail = Math.min(wrap.clientWidth-16, wrap.clientHeight-16);
-  const cs    = Math.max(28, Math.min(40, Math.floor(avail/gridSize)));
+  const cs    = Math.max(28, Math.min(42, Math.floor(avail/N)));
   document.documentElement.style.setProperty('--cell', cs+'px');
 });
 
